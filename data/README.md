@@ -1,3 +1,22 @@
+# Architecture
+
+Le contenu de ce dossier permet de générer les données utilisées par le rendu final.
+
+Ces données sont générées grâce à un projet DBT.
+
+# DBT
+
+## Documentation
+
+Pour visualiser le contenu du projet dbt (table et process), lancer les commandes suivantes depuis le dossier dbt (`cd data/dbt`)
+
+```bash
+uv run dbt docs generate
+uv run dbt docs serve
+```
+
+L'interface est alors disponible sur votre http://localhost:8080/
+
 # WIP - Liste des data utilisées / disponibles
 
 ## Données assurance
