@@ -39,5 +39,3 @@ seeds:
   dbt_build_web_data:
     +enabled: true
     +delimiter: ";"
-
-    azi_gaspar:
