@@ -34,3 +34,10 @@ models:
     # Config indicated by + and applies to all files under models/example/
     example:
       +materialized: view
+
+seeds:
+  dbt_build_web_data:
+    +enabled: true
+    +delimiter: ";"
+
+    azi_gaspar:

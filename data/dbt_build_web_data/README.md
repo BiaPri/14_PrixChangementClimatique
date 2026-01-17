@@ -1,13 +1,20 @@
-Welcome to your new dbt project!
+### Run the projet
 
-### Using the starter project
+- uv run dbt seed
+- uv run dbt run
 
-Try running the following commands:
-- dbt run
-- dbt test
+Then open the output with duckdb (`duckdb --ui dev.duckdb`, see ../README.md for duckdb cli installation)
 
+### Tests
 
-### Resources:
+- un run dbt test
+
+### Open the doc
+
+- uv run dbt docs generate
+- uv run dbt docs serve
+
+### Resources
 - Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
 - Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
 - Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support

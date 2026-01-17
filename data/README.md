@@ -1,30 +1,16 @@
 # Architecture
 
-Le contenu de ce dossier permet de générer les données utilisées par le rendu final.
+Ce dossier est destiné à l'équipe data : pour explorer la donnée disponible, ainsi que générer la base de donnée finale, qui sera utilisée par l'équipe web.
 
-Ces données sont générées grâce à un projet DBT.
+Il est divisé comme suit :
 
-# DBT
+## Dossier /exploration
 
-## Documentation
+Contient tout ce qui relève de l'exploration de donnée.
+Import de la donnée, différents notebooks etc
+Voir le readme : ./exploration/README.md
 
-Pour visualiser le contenu du projet dbt (table et process), lancer les commandes suivantes depuis le dossier dbt (`cd data/dbt`)
+## Dossier /dbt_build_web_data
 
-```bash
-uv run dbt docs generate
-uv run dbt docs serve
-```
-
-L'interface est alors disponible sur votre http://localhost:8080/
-
-# WIP - Liste des data utilisées / disponibles
-
-## Données assurance
-
-(dossier /Gaspar) Base GASPAR publiée sur DataGouv : https://www.data.gouv.fr/datasets/base-nationale-de-gestion-assistee-des-procedures-administratives-relatives-aux-risques-gaspar/
-
-(TODO) Arrêtés Cat Nat (dont cat nat non reconnues) : https://www.ccr.fr/portail-catastrophes-naturelles/liste-arretes/
-
-## Données socio/demo
-
-(submodule /13_odis) Repo du projet Odis saison 13 de D4G, données collectées listées dans le fichier datasources.yaml
+C'est un projet dbt, dont l'ouput final est la base de donnée pour le projet web.
+Voir le readme : ./dbt_build_web_data/README.md
