@@ -1,10 +1,17 @@
-# Template DataForGood
+# Prix du Changement Climatique
 
-This file will become your README and also the index of your
-documentation.
+Bienvenue dans ce projet qui fait partie de la saison 14 de Data For Good.
+
+Rejoignez-nous sur notre channel Mattermost `~14_PrixChangementClimatique_Onboarding` pour rejoindre le projet ou poser vos questions !
+
+## Structure du projet
+
+Ce projet est divisé en plusieurs parties :
+
+- **`/data`** : Exploration de données et pipeline dbt - voir [data/README.md](data/README.md)
+- **`/website`** : Site web Next.js - voir [website/README.md](website/README.md)
 
 # Contributing
-
 
 ## Installation
 
@@ -18,18 +25,11 @@ Une fois installé, il suffit de lancer la commande suivante pour installer la v
 uv sync
 ```
 
-A l'usage, si vous utilisez VSCode, l'environnement virtuel sera automatiquement activé lorsque vous ouvrirez le projet. Sinon, il suffit de l'activer manuellement avec la commande suivante :
+A l'usage, utilisez la commande `uv run ...` (au lieu de `python ...`) pour lancer un script Python. Par exemple:
 
 ```bash
-source .venv/bin/activate
+uv run data/example_script.py
 ```
-
-Ou alors, utilisez la commande `uv run ...` (au lieu de `python ...`) pour lancer un script Python. Par exemple:
-
-```bash
-uv run pipelines/run.py run build_database
-```
-
 
 ## Lancer les precommit-hook localement
 
