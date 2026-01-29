@@ -163,4 +163,4 @@ cython_debug/
 .ruff_cache
 
 # Local files containing exploration data
-.inputs/
+_inputs/
