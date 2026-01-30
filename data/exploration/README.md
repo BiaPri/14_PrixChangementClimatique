@@ -34,7 +34,7 @@ L'ui de duckdb est pratique pour cela. Deux options :
 **Option 1 : Si vous avez le CLI DuckDB installé** (`brew install duckdb` sur macOS)
 
 ```bash
-duckdb data/exploration/odis.duckdb -ui
+duckdb data/exploration/dev.duckdb -cmd "ATTACH 'data/exploration/odis.duckdb' AS odis; CALL start_ui();"
 ```
 
 **Option 2 : Via le script Python** (depuis la racine du projet)
