@@ -13,11 +13,13 @@ Tout d'abord 2 types de données sont à disposition :
 
 - les données odis, des données socio-demo provenant d'un projet DataForGood de la saison précédente. Disponibles pour exploration / utilisation, dans la base de donnée odis.duckdb
 
-Pour télécharger ces deux bases de données, lancer le script suivant (après vous être placé en ligne de commande dans le dossier exploration : `cd data/exploration`) :
+Pour télécharger ces deux bases de données, lancer le script suivant depuis la racine du projet :
 
 ```bash
-sh download.sh
+uv run python data/utils/download.py
 ```
+
+Les bases de données seront automatiquement téléchargées dans `data/exploration/`.
 
 Enfin, il ne faut pas hésiter à chercher, télécharger et utiliser d'autres données sur le web.
 
@@ -27,11 +29,25 @@ Pareil ne pas hésiter à demander conseil sur le Mattermost pour trouver de tel
 
 Avant de se lancer dans la manipulation, il peut être utile d'explorer les données disponibles dans les deux bases de donnée.
 
-L'ui de duckdb est pratique pour cela, lancer (toujours dans le dossier du projet) :
+L'ui de duckdb est pratique pour cela. Deux options :
+
+**Option 1 : Si vous avez le CLI DuckDB installé** (`brew install duckdb` sur macOS)
 
 ```bash
-uv run duckdb dev.duckdb -cmd "ATTACH 'odis.duckdb' AS odis; CALL start_ui();"
+duckdb data/exploration/odis.duckdb -ui
 ```
+
+**Option 2 : Via le script Python** (depuis la racine du projet)
+
+```bash
+# Ouvrir la base odis.duckdb (par défaut)
+uv run python data/utils/launch_ui.py
+
+# Ou ouvrir la base dev.duckdb
+uv run python data/utils/launch_ui.py dev.duckdb
+```
+
+Le script va démarrer le serveur DuckDB UI et ouvrir automatiquement votre navigateur. Appuyez sur `Ctrl+C` pour arrêter le serveur.
 
 ## Manipulation des données
 
