@@ -40,11 +40,7 @@ duckdb data/exploration/odis.duckdb -ui
 **Option 2 : Via le script Python** (depuis la racine du projet)
 
 ```bash
-# Ouvrir la base odis.duckdb (par défaut)
 uv run python data/utils/launch_ui.py
-
-# Ou ouvrir la base dev.duckdb
-uv run python data/utils/launch_ui.py dev.duckdb
 ```
 
 Le script va démarrer le serveur DuckDB UI et ouvrir automatiquement votre navigateur. Appuyez sur `Ctrl+C` pour arrêter le serveur.
