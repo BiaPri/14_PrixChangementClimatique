@@ -95,6 +95,15 @@ def iter_pipeline_inputs(bucket_base_url: str, prefix: str) -> Iterable[str]:
             yield key
 
 
+def list_local_files(root: Path) -> List[str]:
+    """Return relative file paths (posix) under root."""
+    if not root.exists():
+        return []
+    return sorted(
+        p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()
+    )
+
+
 def main():
     # Get the project root (2 levels up from this script)
     project_root = Path(__file__).parent.parent.parent
@@ -102,6 +111,12 @@ def main():
 
     # Ensure the destination directory exists
     pipeline_inputs_dir.mkdir(parents=True, exist_ok=True)
+
+    existing_files = set(list_local_files(pipeline_inputs_dir))
+    if existing_files:
+        print("Fichiers déjà présents:")
+        for path in sorted(existing_files):
+            print(f"  - {path}")
 
     bucket_base_url = "https://s3.fr-par.scw.cloud/qppcc-upload"
     prefix = "pipeline_inputs/"
@@ -114,6 +129,10 @@ def main():
     # Download each file
     success_count = 0
     for relative_path in files:
+        if relative_path in existing_files:
+            print(f"⏭️  Déjà présent, ignoré : {relative_path}")
+            success_count += 1
+            continue
         url = f"{bucket_base_url}/{prefix}{relative_path}"
         destination = pipeline_inputs_dir / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
