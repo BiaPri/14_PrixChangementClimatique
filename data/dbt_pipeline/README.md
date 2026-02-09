@@ -1,31 +1,44 @@
-### Run the projet
+# Pipeline DBT du projet PCC
+
+## Qu'est ce que c'est ?
+
+[DBT](https://docs.getdbt.com/) est un orchestrateur SQL, c'est à dire qu'il permet d'éffectuer des requêtes SQL dans un order précis. Ces requêtes SQL peuvent dépendre des résultats des précédentes requêtes, ce qui permet in fine une longue transformation des données initiales, au fil des requêtes, pour obtenir des tables dans le format voulu et avec les croisement de données nécessaires.
+
+## Comment la faire tourner ?
 
 Pour faire tourner le dbt de bout en bout, suivre les étapes suivantes :
 
-(optionnel) Si vous aviez déjà fait tourner le projet, supprimer l'ancienne base de donnée :
+_(prérequis) Installer les dépendances du projet,_ en installant uv et en faisant `uv sync`
+
+-> voir le README du projet pour plus de détails
+
+_(optionnel) Si vous aviez déjà fait tourner le projet, supprimer l'ancienne base de donnée :_
 
 `rm data/dbt_pipeline/dev.duckdb`
 
-Télécharger tous les fichiers sources depuis le s3 :
+_Télécharger tous les fichiers sources depuis le s3 :_
 
 `uv run python data/utils/download_pipeline_inputs.py`
 
-Se placer dans le dossier du projet dbt pour le faire tourner :
+_Se placer dans le dossier du projet dbt pour le faire tourner :_
 
 `cd data/dbt_pipeline`
 
-Lancer le seed :
+_Lancer le seed :_
 
 `uv run dbt seed`
 
-Lancer le dbt :
+_Lancer le dbt :_
 
 `uv run dbt run`
 
-Observer le résultat :
+_Observer le résultat :_
 
 `duckdb --ui dev.duckdb`
 
+## Comment ajouter des données ?
+
+## Plus de doc svp ?
 
 ### Tests
 
