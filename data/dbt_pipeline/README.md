@@ -38,6 +38,41 @@ _Observer le résultat :_
 
 ## Comment ajouter des données ?
 
+DBT permet la transformation des données présentes dans une base de donnée. Avant de pouvoir les transformer, il faut donc les ajouter dans la base de donnée en question.
+
+Dans ce projet nous utilisons au maximum les données dans leur format brut : les CSV et autres fichiers téléchargés sur le web, qui nous mettons à disposition de dbt pour qu'il lise de dans.
+
+### Procédure simple d'import d'un fichier CSV
+
+Dans cette procédure nous allons utiliser le s3 du projet, dans lequel un dossier "pipeline_inputs" a été créé, pour y stocker le CSV, et créer une table via dbt à partir de ce fichier.
+
+- Etape 1 : uploader le fichier sur le s3.
+
+Important : si vous n'avez pas encore les clés, demandez les sur un des canaux mattermost du projet.
+
+Pour uploader le fichier il vous faudra le faire à la main, en utilisant l'outil de votre choix. Si vous n'avez jamais fait de telles opérations, nous conseillons l'outil cyberduck qui permet de la réaliser facilement, avec une interface. Il faudra créer une nouvelle connection en choisissant bien le format "(Amazon) s3".
+
+Uploader le fichier dans le bucket `qppcc-upload`, dans le dossier /pipeline_inputs de ce bucket.
+
+- Etape 2 : rendre ce fichier public.
+
+C'est important sinon le téléchargement du fichier lors du run de la pipeline ne fonctionnera pas.
+
+La manipulation à faire dépend de l'outil. Sur cyberduck : clic droit sur le fichier, "Share / partager", ok
+
+- Etape 3 : ajouter un modèle dans la pipeline dbt.
+
+Le mieux est de suivre un exemple qui réalise exactement cette opération : https://github.com/dataforgoodfr/14_PrixChangementClimatique/pull/7/changes.
+
+Explication des opérations :
+On créé un fichier dans le dossier /models du dbt, cela créera un modèle dbt et donc une table dans notre base de donnée après l'avoir fait tourner. Par convention nous le créant dans le dossier /bronze pour indiquer qu'il s'agit d'une donnée brut.
+Ce modèle ne fait qu'un `select ... from 'pipeline_inputs/NOM_DE_VOTRE_CSV'`, il contiendra donc les données de votre CSV.
+Enfin on ajoute dans le schema.yml du dossier, qui décrit tous les modèles de ce dossier, la description de notre table ainsi que de tous ses champs importants. Cela permettra aux autres de travailler avec ensuite.
+
+- Etape 4 : enfin on fait tourner le dbt.
+
+En suivant toutes les étapes énnoncées plus haut dans la section "Comment le faire tourner ?"
+
 ## Plus de doc svp ?
 
 ### Tests
