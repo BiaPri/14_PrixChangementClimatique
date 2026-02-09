@@ -73,6 +73,22 @@ Enfin on ajoute dans le schema.yml du dossier, qui décrit tous les modèles de 
 
 En suivant toutes les étapes énnoncées plus haut dans la section "Comment le faire tourner ?"
 
+### Ma PR github est validé, qu'elle est la suite ?
+
+- A ce moment là je merge.
+
+- Puis je checkout main et je pull le nouveau main (localement).
+
+- Je fais tourner la pipeline dbt en entier, voir la procédure plus haut.
+
+- J'obtiens alors un nouveau fichier dev.duckdb dans le dossier data/dbt_pipeline
+
+- J'upload ce fichier à la place du fichier du même nom dans le s3 du projet (voir la "Procédure simple d'import d'un fichier CSV" plus haut pour voir quel outil utiliser)
+
+- Je m'assure que le fichier est publique (voir plus haut également)
+
+- Je communique sur [le channel Mattermost Data Analyse](https://mattermost.services.dataforgood.fr/data-for-good/channels/14_pcc_dataanalyst) l'ajout de la nouvelle donnée
+
 ## Plus de doc svp ?
 
 ### Tests
