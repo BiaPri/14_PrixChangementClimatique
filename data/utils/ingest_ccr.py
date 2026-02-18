@@ -1,10 +1,17 @@
+from pathlib import Path
+
+import geopandas as gpd
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
+from tqdm import tqdm
 from urllib3.util.retry import Retry
 
+current_dir = Path.cwd()
+target_dir = current_dir / "data" / "utils" / "downloaded_files"
 
-def payload_arrete(length="10000", code=None):
+
+def helper_payload_catnat(length="10000", code=None):
     """
     Constructs the payload for the POST request to fetch data about "arretes".
 
@@ -135,65 +142,166 @@ def payload_arrete(length="10000", code=None):
     return payload
 
 
-url = "https://www.ccr.fr/wp-admin/admin-ajax.php"
+def reconnaissance_catnat():
 
-headers = {
-    "Host": "www.ccr.fr",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0",
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Accept-Language": "en-GB,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "X-Requested-With": "XMLHttpRequest",
-    "Content-Length": "1471",
-    "Origin": "https://www.ccr.fr",
-    "Connection": "keep-alive",
-    "Referer": "https://www.ccr.fr/portail-catastrophes-naturelles/liste-arretes/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-origin",
-    "TE": "trailers",
-}
+    url = "https://www.ccr.fr/wp-admin/admin-ajax.php"
 
-# Send the POST request with the payload data
-response_main = requests.post(url, data=payload_arrete(), headers=headers)
+    headers = {
+        "Host": "www.ccr.fr",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-GB,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Length": "1471",
+        "Origin": "https://www.ccr.fr",
+        "Connection": "keep-alive",
+        "Referer": "https://www.ccr.fr/portail-catastrophes-naturelles/liste-arretes/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
 
-# For code_arrete loop
-session = requests.Session()
-retry = Retry(connect=3, backoff_factor=0.5)
-adapter = HTTPAdapter(max_retries=retry)
-session.mount("http://", adapter)
-session.mount("https://", adapter)
+    # Send the POST request with the payload data
+    response_main = requests.post(url, data=helper_payload_catnat(), headers=headers)
 
-if response_main.status_code == 200:
-    response_data_main = response_main.json()
-    df_main = pd.DataFrame(response_data_main["data"])
+    # For code_arrete loop
+    session = requests.Session()
+    retry = Retry(connect=3, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
 
-    # Saving main data as CSV and parquet
-    df_main.to_csv("../seeds/ccr_main_page_data.csv", index=False)
+    if response_main.status_code == 200:
+        response_data_main = response_main.json()
+        df_main = pd.DataFrame(response_data_main["data"])
 
-    # Collect data for each record based on codeArrete (POST request)
-    codes = df_main["codeArrete"].tolist()
+        # Saving main data as CSV and parquet
+        df_main.to_csv("../seeds/ccr_main_page_data.csv", index=False)
 
-    df_details = pd.DataFrame()
+        # Collect data for each record based on codeArrete (POST request)
+        codes = df_main["codeArrete"].tolist()
 
-    for code in codes:
-        response = session.post(
-            url, data=payload_arrete(code=code), headers=headers, timeout=10
+        df_details = pd.DataFrame()
+
+        for code in codes:
+            response = session.post(
+                url, data=helper_payload_catnat(code=code), headers=headers, timeout=10
+            )
+
+            if response.status_code == 200:
+                response_data = response.json()
+
+                df_sub = pd.DataFrame(response_data["data"])
+                df_sub["code_arrete"] = code
+                df_details = pd.concat([df_details, df_sub], axis=0)
+            else:
+                print("Error for code:", code)
+
+        # Saving details data as CSV and parquet
+        df_details.to_csv("../seeds/ccr_details.csv", index=False)
+
+    else:
+        print("Request failed with status code:", response_main.status_code)
+        print("Response content:", response_main.content)
+
+
+def geoportail_ccr():
+
+    main_url = "https://geoportail.ccr.fr/server/rest/services/CarteToutPublic"
+
+    cartes_info = {
+        "COUT_CUMUL": "Coûts Cumulées par Département",
+        "COUT_CUMUL_COM": "Coûts Cumulées par Communes",
+        "COUT_MOY": "Coûts Moyen par Département",
+        "COUT_MOY_COM": "Coûts Moyen par Communes",
+        "FREQ_MOY": "",
+        "FREQ_MOY_COM": "",
+        # "Georisques": "", GEORISQUE => Too much
+        "NB_Risks": "",
+        "NB_Risks_COM": "",
+        "Primes_Catnat": "",
+        "Primes_Catnat_COM": "",
+        "SP": "",
+        "SP_COM": "",
+        "VA": "",
+        "VA_COM": "",
+    }
+
+    for carte_id, carte_info in tqdm(cartes_info.items()):
+        output_path = target_dir / "geoportail_ccr"
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        service_url = f"{main_url}/{carte_id}/MapServer"
+        contents = requests.get(f"{service_url}?f=pjson").json()
+
+        content = contents.get("layers", [])[0]  # change this for GEORISQUE
+        layer_id = content["id"]
+        layer_name = (
+            content["name"]
+            .lower()
+            .replace(" ", "_")
+            .replace("(", "")
+            .replace(")", "")
+            .replace("/", "_")
         )
 
-        if response.status_code == 200:
-            response_data = response.json()
+        all_features = []
+        offset = 0
+        chunk_size = 2000  # Standard ArcGIS limit
 
-            df_sub = pd.DataFrame(response_data["data"])
-            df_sub["code_arrete"] = code
-            df_details = pd.concat([df_details, df_sub], axis=0)
+        # Pagination Loop to bypass Transfer Limit
+        while True:
+            query_params = {
+                "where": "1=1",
+                "outFields": "*",
+                "f": "geojson",
+                "resultOffset": offset,
+                "resultRecordCount": chunk_size,
+            }
+
+            response = requests.get(
+                f"{service_url}/{layer_id}/query", params=query_params
+            )
+
+            if response.status_code != 200:
+                print(f"Error {response.status_code} on layer {layer_name}")
+                break
+
+            data = response.json()
+            features = data.get("features", [])
+            all_features.extend(features)
+
+            exceeded = data.get("properties", {}).get("exceededTransferLimit", False)
+            if exceeded:
+                offset += chunk_size
+            else:
+                break
+
+        if all_features:
+            try:
+                geodata = gpd.GeoDataFrame.from_features(all_features)
+                geodata.set_crs(epsg=4326, inplace=True)
+
+                filename = f"{carte_id.lower()}_{layer_name}.geojson"
+                geodata.to_file(output_path / filename, driver="GeoJSON")
+            except Exception as e:
+                print(f"Processing Error for layer {layer_name}: {e}")
         else:
-            print("Error for code:", code)
+            print(f"No features found for layer {layer_name}")
 
-    # Saving details data as CSV and parquet
-    df_details.to_csv("../seeds/ccr_details.csv", index=False)
 
-else:
-    print("Request failed with status code:", response_main.status_code)
-    print("Response content:", response_main.content)
+def merge_geoportail_ccr_data():
+    "To be continued..."
+    return None
+
+
+def main():
+    # reconnaissance_catnat()
+    geoportail_ccr()
+
+
+if __name__ == "__main__":
+    main()
