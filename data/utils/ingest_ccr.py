@@ -1,3 +1,4 @@
+from functools import reduce
 from pathlib import Path
 
 import geopandas as gpd
@@ -9,6 +10,7 @@ from urllib3.util.retry import Retry
 
 current_dir = Path.cwd()
 target_dir = current_dir / "data" / "utils" / "downloaded_files"
+target_dir.mkdir(parents=True, exist_ok=True)
 
 
 def helper_payload_catnat(length="10000", code=None):
@@ -143,6 +145,15 @@ def helper_payload_catnat(length="10000", code=None):
 
 
 def reconnaissance_catnat():
+    """
+    Collecting data from website https://www.ccr.fr/portail-catastrophes-naturelles/liste-arretes/
+
+    Data collected:
+    - ccr_main_page_data (main page informations, all arrete and arrete code to access details)
+    - ccr_details (information of communes affected for the specific arrete)
+
+    Data is saved in downloaded_files/geoportail_ccr
+    """
 
     url = "https://www.ccr.fr/wp-admin/admin-ajax.php"
 
@@ -179,7 +190,7 @@ def reconnaissance_catnat():
         df_main = pd.DataFrame(response_data_main["data"])
 
         # Saving main data as CSV and parquet
-        df_main.to_csv("../seeds/ccr_main_page_data.csv", index=False)
+        df_main.to_csv(target_dir / "ccr_main_page_data.csv", index=False)
 
         # Collect data for each record based on codeArrete (POST request)
         codes = df_main["codeArrete"].tolist()
@@ -201,7 +212,7 @@ def reconnaissance_catnat():
                 print("Error for code:", code)
 
         # Saving details data as CSV and parquet
-        df_details.to_csv("../seeds/ccr_details.csv", index=False)
+        df_details.to_csv(target_dir / "ccr_details.csv", index=False)
 
     else:
         print("Request failed with status code:", response_main.status_code)
@@ -209,25 +220,36 @@ def reconnaissance_catnat():
 
 
 def geoportail_ccr():
+    """
+    Collecting maps from geoportail_ccr: https://geoportail.ccr.fr/server/rest/services/CarteToutPublic
 
+    This is the ArcGIS server of CCR, this data is visible on the website: https://www.ccr.fr/portail-catastrophes-naturelles/visualiser/
+
+    Data is saved in downloaded_files/geoportail_ccr
+    For the moment the layers related to "Georisques" are not collected
+
+    cartes_info gives a description of the maps present in the CCR server
+
+    In map NB_Risks are already present the info for VA and Primes
+    """
     main_url = "https://geoportail.ccr.fr/server/rest/services/CarteToutPublic"
 
     cartes_info = {
-        "COUT_CUMUL": "Coûts Cumulées par Département",
-        "COUT_CUMUL_COM": "Coûts Cumulées par Communes",
-        "COUT_MOY": "Coûts Moyen par Département",
-        "COUT_MOY_COM": "Coûts Moyen par Communes",
-        "FREQ_MOY": "",
-        "FREQ_MOY_COM": "",
-        # "Georisques": "", GEORISQUE => Too much
-        "NB_Risks": "",
-        "NB_Risks_COM": "",
-        "Primes_Catnat": "",
-        "Primes_Catnat_COM": "",
-        "SP": "",
-        "SP_COM": "",
-        "VA": "",
-        "VA_COM": "",
+        "COUT_CUMUL": "Coûts Cumulées par Département (1995 - 2022)",
+        "COUT_CUMUL_COM": "Coûts Cumulées par Commune (1995 - 2022)",
+        "COUT_MOY": "Coûts Moyen par Département (1995 - 2022)",
+        "COUT_MOY_COM": "Coûts Moyen par Commune (1995 - 2022)",
+        "FREQ_MOY": "Frequence Moyenne de CatNat par Département",
+        "FREQ_MOY_COM": "Frequence Moyenne de CatNat par Commune",
+        # "Georisques": "", GEORISQUE => Too many
+        "NB_Risks": "Nombre Risques Assurés par Département (2024)",
+        "NB_Risks_COM": "Nombre Risques Assurés par Commune (2024)",
+        # "Primes_Catnat": "Primes par Département (2024)", NB_Risks contains the info for VA and Primes
+        # "Primes_Catnat_COM": "Primes par Commune (2024)",
+        "SP": "Sinitre et Prime Ratio par Département (1995 - 2022)",
+        "SP_COM": "Sinitre et Prime Ratio par Commune (1995 - 2022)",
+        # "VA": "Valeurs Assurées par Département (2024)",
+        # "VA_COM": "Valeurs Assurées par Commune (2024)",
     }
 
     for carte_id, carte_info in tqdm(cartes_info.items()):
@@ -294,13 +316,48 @@ def geoportail_ccr():
 
 
 def merge_geoportail_ccr_data():
-    "To be continued..."
-    return None
+    """
+    Merging all geoportail data in a single DataFrame (removing geometry [geopandas])"
+    """
+
+    sub_dir = target_dir / "geoportail_ccr"
+    all_files = list(sub_dir.glob("*.geojson"))
+    departements_list = [f for f in all_files if "_com_" not in f.name]
+    communes_list = list(sub_dir.glob("*_com_*.geojson"))
+
+    loop_dict = {"departements": departements_list, "communes": communes_list}
+
+    for level, geojson_list in loop_dict.items():
+        gdf_list = [gpd.read_file(f) for f in geojson_list]
+        merge_on = [
+            "INSEE_DEP",
+            "Shape_Area",
+            "NOM_DEP",
+            "Shape_Length",
+            "OBJECTID",
+            "geometry",
+        ]
+
+        if level == "communes":
+            merge_on.extend(["INSEE_COM", "NOM"])
+
+        full_gdf = reduce(
+            lambda left, right: left.merge(
+                right,
+                on=merge_on,
+            ),
+            gdf_list,
+        )
+
+        full_gdf.drop(columns="geometry").to_csv(
+            target_dir / f"geoportail_ccr_{level}.csv", index=False
+        )
 
 
 def main():
     # reconnaissance_catnat()
-    geoportail_ccr()
+    # geoportail_ccr()
+    merge_geoportail_ccr_data()
 
 
 if __name__ == "__main__":
